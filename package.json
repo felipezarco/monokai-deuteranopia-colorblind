@@ -1,28 +1,42 @@
 {
-  "name": "monokai-hacker",
-  "displayName": "Monokai Hacker",
-  "description": "Monokai Hacker High Contrast Matrix Terminal Colorblind",
+  "name": "monokai-deuteranopia-colorblind",
+  "displayName": "Monokai Deuteranopia Colorblind",
+  "description": "Deep space theme with animated stars, designed for deuteranopia (red-green colorblindness) accessibility using the blue-yellow axis",
   "publisher": "felipezarco",
-  "version": "1.0.4",
+  "version": "1.0.0",
   "icon": "icon.png",
   "engines": {
     "vscode": "^1.74.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/felipezarco/monokai-hacker"
+    "url": "https://github.com/felipezarco/monokai-deuteranopia-colorblind"
   },
-  "author": "Felipe Zarco <felipezarco@hotmail.com> (http://github.com/felipezarco)",
+  "author": "Felipe Zarco <fezarco@yahoo.com> (http://github.com/felipezarco)",
   "license": "MIT",
   "categories": [
     "Themes"
   ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
   "contributes": {
     "themes": [
       {
-        "label": "Monokai Hacker",
+        "label": "Monokai Deuteranopia Colorblind",
         "uiTheme": "vs-dark",
-        "path": "./themes/Monokai Hacker-color-theme.json"
+        "path": "./themes/Monokai Deuteranopia Colorblind-color-theme.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "monokaiDeuteranopiaColorblind.enableBackground",
+        "title": "Deep Space: Enable Animated Background"
+      },
+      {
+        "command": "monokaiDeuteranopiaColorblind.disableBackground",
+        "title": "Deep Space: Disable Animated Background"
       }
     ]
   }

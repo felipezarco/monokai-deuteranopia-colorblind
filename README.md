@@ -1,26 +1,39 @@
-# Monokai Hacker
+# Monokai Deuteranopia Colorblind
 
-#### Monokai Hacker High Contrast Matrix Terminal Colorblind
+#### Deep Space Theme with Animated Stars - Designed for Deuteranopia Accessibility
 
-Are you searching for a Terminal-like, Monokai-inspired, High-contrast theme but do not want to give up on complete syntax and keyword highlighting?
+Are you searching for a Terminal-like, Monokai-inspired, High-contrast theme but need one that's fully accessible for deuteranopia (red-green colorblindness)?
 
 This is for you.
 
-![image](https://github.com/felipezarco/monokai-hacker/assets/11004919/97e20b58-ecfe-44ec-aabc-db5c7dfa67e4)
+![image](https://github.com/felipezarco/monokai-deuteranopia-colorblind/assets/11004919/97e20b58-ecfe-44ec-aabc-db5c7dfa67e4)
 
-[![Marketplace](https://img.shields.io/badge/Marketplace-Monokai%20Hacker-green.svg)](https://marketplace.visualstudio.com/items?itemName=felipezarco.monokai-hacker)
+[![Marketplace](https://img.shields.io/badge/Marketplace-Monokai%20Deuteranopia%20Colorblind-blue.svg)](https://marketplace.visualstudio.com/items?itemName=felipezarco.monokai-deuteranopia-colorblind)
 
-Download it for free at Visual Studio Marketplace: https://marketplace.visualstudio.com/items?itemName=felipezarco.monokai-hacker
+Download it for free at Visual Studio Marketplace: https://marketplace.visualstudio.com/items?itemName=felipezarco.monokai-deuteranopia-colorblind
+
+## About Deuteranopia
+
+Deuteranopia is a type of red-green color vision deficiency where green cones are absent, making it difficult to distinguish red from green. This theme completely avoids the red-green axis, relying instead on the **blue-yellow color axis** which deuteranopia users perceive clearly:
+
+- **Sky Blue (#56B4E9)** - Types, classes, tags, storage types, and language keywords — the primary accent, always visible and vibrant.
+- **Amber Gold (#E6C07B)** - Strings and property values — warm and distinct from blue.
+- **Violet (#B28BFF)** - Control keywords, logical operators, and modifiers — stands apart from both blue and yellow.
+- **Soft Purple (#D4A0FF)** - Numbers, constants, and escape characters — a lighter complement to violet.
+- **Rose (#CC79A7)** - Decorators, generics, and regex — a unique hue far from the red-green confusion zone.
+- **Yellow-Green (#DCDCAA)** - Function names and tag attributes — balanced and easy to spot.
+- **Deep Navy (#0B1026)** - Background — a rich dark base with optional animated stars.
+
+No reds. No greens. Every color is chosen so you never have to guess.
 
 I've created it so that it has:
 - Coverage of all possible syntax highlights.
 - Clear visibility of keywords.
-- System-like representation of numbers and logical operators on blue.
-- Easily identifiable and distinguishable parameters (classic Monokai orange).
+- Violet representation of numbers and logical operators for high contrast.
+- Easily identifiable and distinguishable parameters (warm amber).
 - Thicker formatting for double-quoted strings and template strings (distinguishes string interpolation).
-- White as the default color, making it easy to spot when a variable turns into a keyword (turn other than white).
-
-And yeah, green will always be the right color if you write instructions to machines!
+- White-blue as the default color, making it easy to spot when a variable turns into a keyword (turns other than white).
+- An optional animated deep space background with floating stars.
 
 Languages:
 1. TypeScript
@@ -38,10 +51,14 @@ Languages:
 13. Rust
 14. C++
 
-[![Give me a star](https://img.shields.io/badge/Give%20me%20a%20star-⭐-yellow.svg)](https://github.com/felipezarco/monokai-hacker)
+[![Give me a star](https://img.shields.io/badge/Give%20me%20a%20star-⭐-yellow.svg)](https://github.com/felipezarco/monokai-deuteranopia-colorblind)
 
-If you enjoy using this theme, don't forget to give it a star on [https://github.com/felipezarco/monokai-hacker](https://github.com/felipezarco/monokai-hacker)!
+If you enjoy using this theme, don't forget to give it a star on [https://github.com/felipezarco/monokai-deuteranopia-colorblind](https://github.com/felipezarco/monokai-deuteranopia-colorblind)!
+
+## You might also like
+
+[Monokai Hacker](https://marketplace.visualstudio.com/items?itemName=felipezarco.monokai-deuteranopia-colorblind) - The original high-contrast green matrix terminal theme that inspired this colorblind-accessible variant.
 
 ## About the Author
 
-[Luiz Felipe Zarco](https://github.com/felipezarco) (felipezarco@hotmail.com)
+[Luiz Felipe Zarco](https://github.com/felipezarco) (fezarco@yahoo.com)

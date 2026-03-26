@@ -1,4 +1,9 @@
 .vscode/**
 .vscode-test/**
+.claude/**
+.git/**
 .gitignore
+*.vsix
+mono\.png
+monokai-deuteranopia-colorblind.png
 vsc-extension-quickstart.md

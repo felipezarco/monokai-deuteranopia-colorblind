@@ -233,47 +233,35 @@ async function patchDirect(cssPath) {
   fs.writeFileSync(cssPath, cssContent, 'utf-8');
 }
 
-// Snap workaround: write CSS file to user storage, then use pkexec to patch
+// Snap workaround: write CSS to user storage, then bind-mount over the read-only original
 async function patchWithElevation(cssPath, context) {
   const storagePath = context.globalStorageUri.fsPath;
   fs.mkdirSync(storagePath, { recursive: true });
 
-  // Read current CSS content
+  // Read current CSS content from the original (unmounted) file
   let cssContent = fs.readFileSync(cssPath, 'utf-8');
   if (isPatched(cssContent)) {
     cssContent = removePatch(cssContent);
   }
   cssContent += generateDeepSpaceCSS();
 
-  // Write patched content to temp file
-  const tempCssPath = path.join(storagePath, 'workbench-patched.css');
-  fs.writeFileSync(tempCssPath, cssContent, 'utf-8');
+  // Write patched content to persistent file
+  const patchedCssPath = path.join(storagePath, 'workbench-patched.css');
+  fs.writeFileSync(patchedCssPath, cssContent, 'utf-8');
 
-  // Use pkexec (graphical sudo) to copy the patched file over the original
+  // Use bind mount to overlay the patched file over the read-only original
   return new Promise((resolve, reject) => {
-    exec(`pkexec cp "${tempCssPath}" "${cssPath}"`, (err) => {
-      // Clean up temp file
-      try { fs.unlinkSync(tempCssPath); } catch {}
+    exec(`pkexec mount --bind "${patchedCssPath}" "${cssPath}"`, (err) => {
       if (err) reject(err);
       else resolve();
     });
   });
 }
 
-async function unpatchWithElevation(cssPath, context) {
-  const storagePath = context.globalStorageUri.fsPath;
-  fs.mkdirSync(storagePath, { recursive: true });
-
-  let cssContent = fs.readFileSync(cssPath, 'utf-8');
-  if (!isPatched(cssContent)) return false;
-
-  cssContent = removePatch(cssContent);
-  const tempCssPath = path.join(storagePath, 'workbench-clean.css');
-  fs.writeFileSync(tempCssPath, cssContent, 'utf-8');
-
+async function unpatchWithElevation(cssPath) {
+  // Unmount the bind mount to restore the original file
   return new Promise((resolve, reject) => {
-    exec(`pkexec cp "${tempCssPath}" "${cssPath}"`, (err) => {
-      try { fs.unlinkSync(tempCssPath); } catch {}
+    exec(`pkexec umount "${cssPath}"`, (err) => {
       if (err) reject(err);
       else resolve(true);
     });
@@ -337,7 +325,7 @@ async function disableBackground(context) {
       const cleaned = removePatch(cssContent);
       fs.writeFileSync(cssPath, cleaned, 'utf-8');
     } else {
-      await unpatchWithElevation(cssPath, context);
+      await unpatchWithElevation(cssPath);
     }
 
     const action = await vscode.window.showInformationMessage(

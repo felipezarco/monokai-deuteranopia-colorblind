@@ -2,17 +2,17 @@
 
 #### Deep Space Theme with Animated Stars - Designed for Deuteranopia Accessibility
 
-Are you searching for a Terminal-like, Monokai-inspired, High-contrast theme but need one that's fully accessible for deuteranopia (red-green colorblindness)?
+A Monokai-inspired, high-contrast dark theme designed for developers with deuteranopia (red-green colorblindness). Features an optional animated deep space background with floating stars.
 
 This is for you.
 
-![image](https://github.com/felipezarco/monokai-deuteranopia-colorblind/assets/11004919/97e20b58-ecfe-44ec-aabc-db5c7dfa67e4)
+![screenshot](https://raw.githubusercontent.com/felipezarco/monokai-deuteranopia-colorblind/main/screenshot.png)
 
 [![Marketplace](https://img.shields.io/badge/Marketplace-Monokai%20Deuteranopia%20Colorblind-blue.svg)](https://marketplace.visualstudio.com/items?itemName=felipezarco.monokai-deuteranopia-colorblind)
 
 Download it for free at Visual Studio Marketplace: https://marketplace.visualstudio.com/items?itemName=felipezarco.monokai-deuteranopia-colorblind
 
-## About Deuteranopia
+## About Deuteranopia and this theme
 
 Deuteranopia is a type of red-green color vision deficiency where green cones are absent, making it difficult to distinguish red from green. This theme completely avoids the red-green axis, relying instead on the **blue-yellow color axis** which deuteranopia users perceive clearly:
 

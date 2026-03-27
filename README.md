@@ -1,10 +1,12 @@
 # Monokai Deuteranopia Colorblind
 
-#### Deep Space Theme with Animated Stars - Designed for Deuteranopia Accessibility
+#### Designed for Deep Relaxation & Focus with Deuteranopia Accessibility
+
+Features Deep Space Theme with Animated Stars! Yeah.
 
 A Monokai-inspired, high-contrast dark theme designed for developers with deuteranopia (red-green colorblindness). Features an optional animated deep space background with floating stars.
 
-This is for you.
+This is your rare underground favorite theme you will brag about.
 
 ![screenshot](https://raw.githubusercontent.com/felipezarco/monokai-deuteranopia-colorblind/main/screenshot.png)
 

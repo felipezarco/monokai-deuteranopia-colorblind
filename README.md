@@ -57,8 +57,14 @@ If you enjoy using this theme, don't forget to give it a star on [https://github
 
 ## You might also like
 
-[Monokai Hacker](https://marketplace.visualstudio.com/items?itemName=felipezarco.monokai-deuteranopia-colorblind) - The original high-contrast green matrix terminal theme that inspired this colorblind-accessible variant.
+[Monokai Hacker](https://marketplace.visualstudio.com/items?itemName=felipezarco.monokai-hacker) - The original high-contrast green matrix terminal theme that inspired this colorblind-accessible variant.
 
 ## About the Author
 
 [Luiz Felipe Zarco](https://github.com/felipezarco) (fezarco@yahoo.com)
+
+## Donate
+
+If you find this theme useful, consider supporting its development!!
+
+[![Donate with PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/donate?hosted_button_id=A4SYWHDBRXLQC)

@@ -50,6 +50,7 @@ Languages:
 12. Kotlin
 13. Rust
 14. C++
+And many others!
 
 [![Give me a star](https://img.shields.io/badge/Give%20me%20a%20star-⭐-yellow.svg)](https://github.com/felipezarco/monokai-deuteranopia-colorblind)
 

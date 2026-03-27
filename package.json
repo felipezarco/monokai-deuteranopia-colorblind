@@ -3,7 +3,7 @@
   "displayName": "Monokai Deuteranopia Colorblind",
   "description": "Deep space theme with animated stars, designed for deuteranopia (red-green colorblindness) accessibility using the blue-yellow axis",
   "publisher": "felipezarco",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "icon": "icon.png",
   "engines": {
     "vscode": "^1.74.0"

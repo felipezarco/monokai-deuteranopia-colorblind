@@ -31,27 +31,41 @@ function getUserCssPath(context) {
   return path.join(context.globalStorageUri.fsPath, 'deepspace.css');
 }
 
-function generateStars(count, maxX, maxY) {
+// Gera estrelas com cores e tamanhos variados para parecer um céu real
+// size: 0 = 1px, 1 = "0 0 1px 1px" (brilho), 2 = "0 0 2px 2px" (estrela grande)
+function generateStars(count, maxX, maxY, size = 0) {
   const shadows = [];
+  const colors = ['#ffffff', '#ffffffcc', '#ffffffaa', '#b8d4ff', '#ffd6aa', '#e8e8ff'];
   for (let i = 0; i < count; i++) {
     const x = Math.floor(Math.random() * maxX);
     const y = Math.floor(Math.random() * maxY);
-    shadows.push(`${x}px ${y}px #ffffff`);
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    if (size === 0) {
+      shadows.push(`${x}px ${y}px ${color}`);
+    } else {
+      shadows.push(`${x}px ${y}px ${size}px ${size}px ${color}`);
+    }
   }
   return shadows.join(', ');
 }
 
 function generateDeepSpaceCSS() {
-  const smallStars = generateStars(600, 3000, 3000);
-  const mediumStars = generateStars(200, 3000, 3000);
-  const largeStars = generateStars(50, 3000, 3000);
+  // TÉCNICA DE LOOP INFINITO CORRETO:
+  // Geramos estrelas espalhadas em 2000x2000px.
+  // A animação move de 0 até -2000px (tamanho exato do campo).
+  // Como as estrelas se repetem periodicamente, o loop parece contínuo.
+  const FIELD = 2000;
+
+  const smallStars  = generateStars(700, FIELD, FIELD, 0);   // 1px, muitas
+  const mediumStars = generateStars(200, FIELD, FIELD, 1);   // com brilho sutil
+  const largeStars  = generateStars(40,  FIELD, FIELD, 2);   // estrelas grandes
 
   return `
 ${PATCH_MARKER}
 
 /* === Deep Space Gradient Background === */
 body {
-  background: linear-gradient(135deg, #020510 0%, #0a1628 25%, #0d1b3e 50%, #081230 75%, #030712 100%) !important;
+  background: radial-gradient(ellipse at 50% 0%, #0d1b3e 0%, #060d1f 40%, #020510 100%) !important;
   background-attachment: fixed !important;
 }
 
@@ -86,52 +100,82 @@ body {
   background: transparent !important;
 }
 
-/* === Star Layers === */
+/* === FIX: Preserve input/textarea backgrounds so Claude Code and other panels remain usable === */
+.quick-input-widget,
+.quick-input-widget input,
+.monaco-inputbox,
+.monaco-inputbox input,
+.monaco-inputbox textarea,
+input,
+textarea,
+.suggest-input-container,
+.chat-input-part,
+.chat-input-part textarea,
+.interactive-input-part,
+.interactive-input-part textarea,
+.aichat-input textarea {
+  background: #0d1b3e !important;
+  color: #e8e8e8 !important;
+}
+
+/* === Star Layers ===
+   Técnica: width/height = 1px com border-radius: 50%
+   O elemento físico é invisível; as estrelas vêm todas do box-shadow.
+   A animação move exatamente o tamanho do campo (${FIELD}px) para criar
+   loop contínuo sem estrelas sumindo ou aparecendo abruptamente. */
+
+/* Camada 1 — estrelas pequenas, movimento lento */
 body::before {
   content: '';
   position: fixed;
   top: 0;
   left: 0;
-  width: 3000px;
-  height: 3000px;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
   z-index: 0;
   pointer-events: none;
   background: transparent;
   box-shadow: ${smallStars};
-  animation: deepspace-stars-drift 180s linear infinite;
-  opacity: 0.6;
+  animation: deepspace-drift-slow ${FIELD / 4}s linear infinite;
+  opacity: 0.7;
 }
 
+/* Camada 2 — estrelas médias com brilho, velocidade média */
 body::after {
   content: '';
   position: fixed;
   top: 0;
   left: 0;
-  width: 3000px;
-  height: 3000px;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
   z-index: 0;
   pointer-events: none;
   background: transparent;
   box-shadow: ${mediumStars};
-  animation: deepspace-stars-drift 120s linear infinite;
-  opacity: 0.8;
+  animation: deepspace-drift-med ${FIELD / 8}s linear infinite;
+  opacity: 0.85;
 }
 
+/* Camada 3 — estrelas grandes brilhantes, mais rápidas (parallax) */
 .monaco-workbench::before {
   content: '';
   position: fixed;
   top: 0;
   left: 0;
-  width: 3000px;
-  height: 3000px;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
   z-index: 0;
   pointer-events: none;
   background: transparent;
   box-shadow: ${largeStars};
-  animation: deepspace-stars-drift 80s linear infinite;
+  animation: deepspace-drift-fast ${FIELD / 16}s linear infinite;
   opacity: 1;
 }
 
+/* Camada 4 — névoa de nebulosa pulsando suavemente ao fundo */
 .monaco-workbench::after {
   content: '';
   position: fixed;
@@ -141,21 +185,34 @@ body::after {
   height: 100%;
   z-index: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse at 20% 50%, rgba(16, 36, 82, 0.15) 0%, transparent 60%),
-              radial-gradient(ellipse at 80% 20%, rgba(30, 15, 60, 0.12) 0%, transparent 50%),
-              radial-gradient(ellipse at 50% 80%, rgba(10, 30, 70, 0.1) 0%, transparent 50%);
-  animation: deepspace-nebula-pulse 25s ease-in-out infinite alternate;
+  background:
+    radial-gradient(ellipse at 15% 40%, rgba(30, 60, 140, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 15%, rgba(60, 20, 100, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 85%, rgba(10, 40, 90, 0.08) 0%, transparent 50%);
+  animation: deepspace-nebula-pulse 30s ease-in-out infinite alternate;
 }
 
-@keyframes deepspace-stars-drift {
+/* Cada camada se desloca exatamente FIELD px — o campo inteiro —
+   então quando reinicia o translate(0,0) as estrelas estão na mesma posição visual: loop perfeito */
+@keyframes deepspace-drift-slow {
   from { transform: translate(0, 0); }
-  to { transform: translate(-1500px, -750px); }
+  to   { transform: translate(-${FIELD}px, -${Math.floor(FIELD / 3)}px); }
+}
+
+@keyframes deepspace-drift-med {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(-${FIELD}px, -${Math.floor(FIELD / 3)}px); }
+}
+
+@keyframes deepspace-drift-fast {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(-${FIELD}px, -${Math.floor(FIELD / 3)}px); }
 }
 
 @keyframes deepspace-nebula-pulse {
-  0% { opacity: 0.4; }
-  50% { opacity: 0.7; }
-  100% { opacity: 0.5; }
+  0%   { opacity: 0.3; }
+  50%  { opacity: 0.7; }
+  100% { opacity: 0.4; }
 }
 
 .monaco-workbench .part {

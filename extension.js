@@ -28,6 +28,50 @@ function isSnap() {
   return vscode.env.appRoot.includes('/snap/');
 }
 
+function elevatedCopy(source, dest) {
+  const platform = process.platform;
+  let cmd;
+  if (platform === 'win32') {
+    const ps = `Copy-Item -Path '${source}' -Destination '${dest}' -Force`;
+    cmd = `powershell -Command "Start-Process powershell -ArgumentList '-Command', '${ps.replace(/'/g, "''")}' -Verb RunAs -Wait"`;
+  } else if (platform === 'darwin') {
+    cmd = `osascript -e 'do shell script "cp \\"${source}\\" \\"${dest}\\"" with administrator privileges'`;
+  } else {
+    cmd = `pkexec cp "${source}" "${dest}"`;
+  }
+  return new Promise((resolve, reject) => {
+    exec(cmd, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+function elevatedMount(pairs) {
+  const platform = process.platform;
+  if (platform === 'win32' || platform === 'darwin') {
+    return pairs.reduce((p, [src, dst]) => p.then(() => elevatedCopy(src, dst)), Promise.resolve());
+  }
+  const mounts = pairs.map(([src, dst]) => `mount --bind "${src}" "${dst}"`).join(' && ');
+  return new Promise((resolve, reject) => {
+    exec(`pkexec sh -c '${mounts}'`, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+function elevatedUnmount(paths) {
+  if (process.platform !== 'linux') return Promise.resolve();
+  const umounts = paths.map(p => `umount "${p}" 2>/dev/null`).join('; ');
+  return new Promise((resolve, reject) => {
+    exec(`pkexec sh -c '${umounts}; true'`, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
 function generateStars(count, maxX, maxY, size = 0) {
   const shadows = [];
   const colors = ['#ffffff', '#ffffffcc', '#ffffffaa', '#b8d4ff', '#ffd6aa', '#e8e8ff'];
@@ -242,12 +286,7 @@ function patchHtmlElevated(htmlPath, context) {
   fs.mkdirSync(storagePath, { recursive: true });
   const tempPath = path.join(storagePath, 'workbench-patched.html');
   fs.writeFileSync(tempPath, buildPatchedHtml(htmlPath), 'utf-8');
-  return new Promise((resolve, reject) => {
-    exec(`pkexec cp "${tempPath}" "${htmlPath}"`, (err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+  return elevatedCopy(tempPath, htmlPath);
 }
 
 function unpatchCssFile(cssPath) {
@@ -271,12 +310,7 @@ function unpatchHtmlElevated(htmlPath, context) {
   if (!isHtmlPatched(content)) return Promise.resolve();
   const tempPath = path.join(storagePath, 'workbench-unpatched.html');
   fs.writeFileSync(tempPath, removeHtmlPatch(content), 'utf-8');
-  return new Promise((resolve, reject) => {
-    exec(`pkexec cp "${tempPath}" "${htmlPath}"`, (err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+  return elevatedCopy(tempPath, htmlPath);
 }
 
 async function patchWithElevation(cssPath, htmlPath, context) {
@@ -289,34 +323,23 @@ async function patchWithElevation(cssPath, htmlPath, context) {
   const patchedCssPath = path.join(storagePath, 'workbench-patched.css');
   fs.writeFileSync(patchedCssPath, cssContent, 'utf-8');
 
-  let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
-  if (isHtmlPatched(htmlContent)) htmlContent = removeHtmlPatch(htmlContent);
-  const insertPoint = htmlContent.lastIndexOf('</html>');
-  if (insertPoint !== -1) {
-    htmlContent = htmlContent.substring(0, insertPoint) + generateDeepSpaceHTML() + '\n' + htmlContent.substring(insertPoint);
-  } else {
-    htmlContent += '\n' + generateDeepSpaceHTML();
-  }
-  const patchedHtmlPath = path.join(storagePath, 'workbench-patched.html');
-  fs.writeFileSync(patchedHtmlPath, htmlContent, 'utf-8');
+  const pairs = [[patchedCssPath, cssPath]];
 
-  return new Promise((resolve, reject) => {
-    const cmd = `pkexec sh -c 'mount --bind "${patchedCssPath}" "${cssPath}" && mount --bind "${patchedHtmlPath}" "${htmlPath}"'`;
-    exec(cmd, (err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+  if (htmlPath) {
+    const patchedHtmlPath = path.join(storagePath, 'workbench-patched.html');
+    fs.writeFileSync(patchedHtmlPath, buildPatchedHtml(htmlPath), 'utf-8');
+    pairs.push([patchedHtmlPath, htmlPath]);
+  }
+
+  return elevatedMount(pairs);
 }
 
 async function unpatchWithElevation(cssPath, htmlPath) {
-  return new Promise((resolve, reject) => {
-    const cmd = `pkexec sh -c 'umount "${cssPath}" 2>/dev/null; umount "${htmlPath}" 2>/dev/null; true'`;
-    exec(cmd, (err) => {
-      if (err) reject(err);
-      else resolve(true);
-    });
-  });
+  if (process.platform === 'linux') {
+    return elevatedUnmount([cssPath, htmlPath].filter(Boolean));
+  }
+  // Windows/macOS: files were copied, not mounted — unpatch by rewriting
+  // This case is handled by the caller writing clean content with elevation
 }
 
 async function enableBackground(context) {
@@ -384,8 +407,14 @@ async function disableBackground(context) {
 
     if (isWritable(cssPath)) {
       unpatchCssFile(cssPath);
-    } else {
+    } else if (process.platform === 'linux') {
       await unpatchWithElevation(cssPath, htmlPath);
+    } else {
+      const storagePath = context.globalStorageUri.fsPath;
+      fs.mkdirSync(storagePath, { recursive: true });
+      const tempCss = path.join(storagePath, 'workbench-clean.css');
+      fs.writeFileSync(tempCss, removeCssPatch(fs.readFileSync(cssPath, 'utf-8')), 'utf-8');
+      await elevatedCopy(tempCss, cssPath);
     }
 
     if (htmlPath) {

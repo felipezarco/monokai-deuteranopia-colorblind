@@ -1,4 +1,4 @@
-# Monokai Deuteranopia Colorblind
+# Monokai Deuteranopia Colorblind Theme
 
 #### Designed for Deep Relaxation & Focus with Deuteranopia Accessibility
 
@@ -61,6 +61,30 @@ If you enjoy using this theme, don't forget to give it a star on [https://github
 ## You might also like
 
 [Monokai Hacker](https://marketplace.visualstudio.com/items?itemName=felipezarco.monokai-hacker) - The original high-contrast green matrix terminal theme that inspired this colorblind-accessible variant.
+
+## Installing on Cursor IDE
+
+Run the one-liner below in your terminal and it will handle everything automatically:
+
+**Linux / macOS:**
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/felipezarco/monokai-deuteranopia-colorblind/main/install-cursor.sh)
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/felipezarco/monokai-deuteranopia-colorblind/main/install-cursor.ps1 | iex
+```
+
+[Cursor](https://www.cursor.com) is an AI-powered code editor built as a fork of VS Code. While it shares most of VS Code's functionality, **it does not include access to the Visual Studio Marketplace** — meaning you can't search for or install themes through the Extensions panel the usual way. The built-in theme list is limited to a small set of defaults.
+
+However, because Cursor is based on VS Code, it uses the exact same extension format and folder structure. You can install this theme by dropping the files directly into Cursor's extensions directory.
+
+Both scripts will:
+1. Download the latest `.vsix` release from GitHub
+2. Extract it into `~/.cursor/extensions/` (Linux/macOS) or `%USERPROFILE%\.cursor\extensions\` (Windows)
+
+After running, **restart Cursor** and open the theme picker with `Ctrl+K Ctrl+T` (or `Cmd+K Cmd+T` on Mac), then select **Monokai Deuteranopia Colorblind**.
 
 ## About the Author
 

@@ -3,7 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
-const PATCH_MARKER = '/* MONOKAI-DEUTERANOPIA-COLORBLIND-DEEPSPACE */';
+const CSS_PATCH_MARKER = '/* MONOKAI-DEUTERANOPIA-COLORBLIND-DEEPSPACE */';
+const HTML_PATCH_MARKER = '<!-- MONOKAI-DEUTERANOPIA-DEEPSPACE -->';
 
 function getWorkbenchHtmlPath() {
   const appRoot = vscode.env.appRoot;
@@ -27,12 +28,6 @@ function isSnap() {
   return vscode.env.appRoot.includes('/snap/');
 }
 
-function getUserCssPath(context) {
-  return path.join(context.globalStorageUri.fsPath, 'deepspace.css');
-}
-
-// Gera estrelas com cores e tamanhos variados para parecer um céu real
-// size: 0 = 1px, 1 = "0 0 1px 1px" (brilho), 2 = "0 0 2px 2px" (estrela grande)
 function generateStars(count, maxX, maxY, size = 0) {
   const shadows = [];
   const colors = ['#ffffff', '#ffffffcc', '#ffffffaa', '#b8d4ff', '#ffd6aa', '#e8e8ff'];
@@ -50,20 +45,14 @@ function generateStars(count, maxX, maxY, size = 0) {
 }
 
 function generateDeepSpaceCSS() {
-  // TÉCNICA DE LOOP INFINITO CORRETO:
-  // Geramos estrelas espalhadas em 2000x2000px.
-  // A animação move de 0 até -2000px (tamanho exato do campo).
-  // Como as estrelas se repetem periodicamente, o loop parece contínuo.
   const FIELD = 2000;
-
-  const smallStars  = generateStars(700, FIELD, FIELD, 0);   // 1px, muitas
-  const mediumStars = generateStars(200, FIELD, FIELD, 1);   // com brilho sutil
-  const largeStars  = generateStars(40,  FIELD, FIELD, 2);   // estrelas grandes
+  const smallStars  = generateStars(700, FIELD, FIELD, 0);
+  const mediumStars = generateStars(200, FIELD, FIELD, 1);
+  const largeStars  = generateStars(40,  FIELD, FIELD, 2);
 
   return `
-${PATCH_MARKER}
+${CSS_PATCH_MARKER}
 
-/* === Deep Space Gradient Background === */
 body {
   background: radial-gradient(ellipse at 50% 0%, #0d1b3e 0%, #060d1f 40%, #020510 100%) !important;
   background-attachment: fixed !important;
@@ -73,14 +62,8 @@ body {
   background: transparent !important;
 }
 
-.monaco-workbench .part.editor > .content {
-  background: transparent !important;
-}
-
-.monaco-editor,
-.monaco-editor .overflow-guard,
 .monaco-editor-background,
-.monaco-editor .inputarea.ime-input {
+.monaco-editor .overflow-guard {
   background: transparent !important;
 }
 
@@ -100,91 +83,49 @@ body {
   background: transparent !important;
 }
 
-/* === FIX: Preserve input/textarea backgrounds so Claude Code and other panels remain usable === */
-.quick-input-widget,
-.quick-input-widget input,
-.monaco-inputbox,
-.monaco-inputbox input,
-.monaco-inputbox textarea,
-input,
-textarea,
-.suggest-input-container,
-.chat-input-part,
-.chat-input-part textarea,
-.interactive-input-part,
-.interactive-input-part textarea,
-.aichat-input textarea {
-  background: #0d1b3e !important;
-  color: #e8e8e8 !important;
+/* Star layers — real DOM divs injected into workbench HTML
+   (pseudo-elements on body/.monaco-workbench conflict with Cursor internals) */
+.deepspace-stars {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
 }
 
-/* === Star Layers ===
-   Técnica: width/height = 1px com border-radius: 50%
-   O elemento físico é invisível; as estrelas vêm todas do box-shadow.
-   A animação move exatamente o tamanho do campo (${FIELD}px) para criar
-   loop contínuo sem estrelas sumindo ou aparecendo abruptamente. */
-
-/* Camada 1 — estrelas pequenas, movimento lento */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
+.deepspace-stars-1 {
   width: 1px;
   height: 1px;
   border-radius: 50%;
-  z-index: 0;
-  pointer-events: none;
   background: transparent;
   box-shadow: ${smallStars};
   animation: deepspace-drift-slow ${FIELD / 4}s linear infinite;
   opacity: 0.7;
 }
 
-/* Camada 2 — estrelas médias com brilho, velocidade média */
-body::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
+.deepspace-stars-2 {
   width: 1px;
   height: 1px;
   border-radius: 50%;
-  z-index: 0;
-  pointer-events: none;
   background: transparent;
   box-shadow: ${mediumStars};
   animation: deepspace-drift-med ${FIELD / 8}s linear infinite;
   opacity: 0.85;
 }
 
-/* Camada 3 — estrelas grandes brilhantes, mais rápidas (parallax) */
-.monaco-workbench::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
+.deepspace-stars-3 {
   width: 1px;
   height: 1px;
   border-radius: 50%;
-  z-index: 0;
-  pointer-events: none;
   background: transparent;
   box-shadow: ${largeStars};
   animation: deepspace-drift-fast ${FIELD / 16}s linear infinite;
   opacity: 1;
 }
 
-/* Camada 4 — névoa de nebulosa pulsando suavemente ao fundo */
-.monaco-workbench::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
+.deepspace-stars-4 {
   width: 100%;
   height: 100%;
-  z-index: 0;
-  pointer-events: none;
   background:
     radial-gradient(ellipse at 15% 40%, rgba(30, 60, 140, 0.12) 0%, transparent 55%),
     radial-gradient(ellipse at 85% 15%, rgba(60, 20, 100, 0.10) 0%, transparent 50%),
@@ -192,8 +133,6 @@ body::after {
   animation: deepspace-nebula-pulse 30s ease-in-out infinite alternate;
 }
 
-/* Cada camada se desloca exatamente FIELD px — o campo inteiro —
-   então quando reinicia o translate(0,0) as estrelas estão na mesma posição visual: loop perfeito */
 @keyframes deepspace-drift-slow {
   from { transform: translate(0, 0); }
   to   { transform: translate(-${FIELD}px, -${Math.floor(FIELD / 3)}px); }
@@ -215,59 +154,56 @@ body::after {
   100% { opacity: 0.4; }
 }
 
-.monaco-workbench .part {
-  z-index: 1;
-  position: relative;
-}
-
 .monaco-workbench .part.sidebar,
 .monaco-workbench .part.panel,
 .monaco-workbench .part.auxiliarybar {
   background: rgba(6, 10, 24, 0.85) !important;
 }
 
-.monaco-workbench .part.titlebar {
-  background: rgba(5, 8, 22, 0.9) !important;
-}
-
-.monaco-workbench .part.statusbar {
-  background: rgba(5, 8, 22, 0.9) !important;
-}
-
+.monaco-workbench .part.titlebar,
+.monaco-workbench .part.statusbar,
 .monaco-workbench .part.activitybar {
   background: rgba(5, 8, 22, 0.9) !important;
-}
-
-.tabs-container,
-.tab,
-.monaco-workbench .part.editor > .content .editor-group-container > .title {
-  background: transparent !important;
-}
-
-.tab.active {
-  background: rgba(11, 16, 38, 0.8) !important;
-}
-
-.editor-group-container > .title {
-  background: rgba(6, 10, 24, 0.7) !important;
 }
 
 .terminal-wrapper {
   background: rgba(6, 10, 24, 0.85) !important;
 }
 
-${PATCH_MARKER}
+${CSS_PATCH_MARKER}
 `;
 }
 
-function isPatched(content) {
-  return content.includes(PATCH_MARKER);
+function generateDeepSpaceHTML() {
+  return [
+    HTML_PATCH_MARKER,
+    '<div class="deepspace-stars deepspace-stars-1"></div>',
+    '<div class="deepspace-stars deepspace-stars-2"></div>',
+    '<div class="deepspace-stars deepspace-stars-3"></div>',
+    '<div class="deepspace-stars deepspace-stars-4"></div>',
+    HTML_PATCH_MARKER
+  ].join('\n');
 }
 
-function removePatch(content) {
-  const startIdx = content.indexOf(PATCH_MARKER);
+function isCssPatched(content) {
+  return content.includes(CSS_PATCH_MARKER);
+}
+
+function isHtmlPatched(content) {
+  return content.includes(HTML_PATCH_MARKER);
+}
+
+function removeCssPatch(content) {
+  const startIdx = content.indexOf(CSS_PATCH_MARKER);
   if (startIdx === -1) return content;
-  const endIdx = content.lastIndexOf(PATCH_MARKER) + PATCH_MARKER.length;
+  const endIdx = content.lastIndexOf(CSS_PATCH_MARKER) + CSS_PATCH_MARKER.length;
+  return content.substring(0, startIdx) + content.substring(endIdx);
+}
+
+function removeHtmlPatch(content) {
+  const startIdx = content.indexOf(HTML_PATCH_MARKER);
+  if (startIdx === -1) return content;
+  const endIdx = content.lastIndexOf(HTML_PATCH_MARKER) + HTML_PATCH_MARKER.length;
   return content.substring(0, startIdx) + content.substring(endIdx);
 }
 
@@ -280,45 +216,103 @@ function isWritable(filePath) {
   }
 }
 
-// Direct patch: write CSS into VS Code's workbench CSS file
-async function patchDirect(cssPath) {
-  let cssContent = fs.readFileSync(cssPath, 'utf-8');
-  if (isPatched(cssContent)) {
-    cssContent = removePatch(cssContent);
-  }
-  cssContent += generateDeepSpaceCSS();
-  fs.writeFileSync(cssPath, cssContent, 'utf-8');
+function patchCssFile(cssPath) {
+  let content = fs.readFileSync(cssPath, 'utf-8');
+  if (isCssPatched(content)) content = removeCssPatch(content);
+  content += generateDeepSpaceCSS();
+  fs.writeFileSync(cssPath, content, 'utf-8');
 }
 
-// Snap workaround: write CSS to user storage, then bind-mount over the read-only original
-async function patchWithElevation(cssPath, context) {
+function buildPatchedHtml(htmlPath) {
+  let content = fs.readFileSync(htmlPath, 'utf-8');
+  if (isHtmlPatched(content)) content = removeHtmlPatch(content);
+  const insertPoint = content.lastIndexOf('</html>');
+  if (insertPoint !== -1) {
+    return content.substring(0, insertPoint) + generateDeepSpaceHTML() + '\n' + content.substring(insertPoint);
+  }
+  return content + '\n' + generateDeepSpaceHTML();
+}
+
+function patchHtmlFile(htmlPath) {
+  fs.writeFileSync(htmlPath, buildPatchedHtml(htmlPath), 'utf-8');
+}
+
+function patchHtmlElevated(htmlPath, context) {
   const storagePath = context.globalStorageUri.fsPath;
   fs.mkdirSync(storagePath, { recursive: true });
-
-  // Read current CSS content from the original (unmounted) file
-  let cssContent = fs.readFileSync(cssPath, 'utf-8');
-  if (isPatched(cssContent)) {
-    cssContent = removePatch(cssContent);
-  }
-  cssContent += generateDeepSpaceCSS();
-
-  // Write patched content to persistent file
-  const patchedCssPath = path.join(storagePath, 'workbench-patched.css');
-  fs.writeFileSync(patchedCssPath, cssContent, 'utf-8');
-
-  // Use bind mount to overlay the patched file over the read-only original
+  const tempPath = path.join(storagePath, 'workbench-patched.html');
+  fs.writeFileSync(tempPath, buildPatchedHtml(htmlPath), 'utf-8');
   return new Promise((resolve, reject) => {
-    exec(`pkexec mount --bind "${patchedCssPath}" "${cssPath}"`, (err) => {
+    exec(`pkexec cp "${tempPath}" "${htmlPath}"`, (err) => {
       if (err) reject(err);
       else resolve();
     });
   });
 }
 
-async function unpatchWithElevation(cssPath) {
-  // Unmount the bind mount to restore the original file
+function unpatchCssFile(cssPath) {
+  let content = fs.readFileSync(cssPath, 'utf-8');
+  if (!isCssPatched(content)) return false;
+  fs.writeFileSync(cssPath, removeCssPatch(content), 'utf-8');
+  return true;
+}
+
+function unpatchHtmlFile(htmlPath) {
+  let content = fs.readFileSync(htmlPath, 'utf-8');
+  if (!isHtmlPatched(content)) return false;
+  fs.writeFileSync(htmlPath, removeHtmlPatch(content), 'utf-8');
+  return true;
+}
+
+function unpatchHtmlElevated(htmlPath, context) {
+  const storagePath = context.globalStorageUri.fsPath;
+  fs.mkdirSync(storagePath, { recursive: true });
+  let content = fs.readFileSync(htmlPath, 'utf-8');
+  if (!isHtmlPatched(content)) return Promise.resolve();
+  const tempPath = path.join(storagePath, 'workbench-unpatched.html');
+  fs.writeFileSync(tempPath, removeHtmlPatch(content), 'utf-8');
   return new Promise((resolve, reject) => {
-    exec(`pkexec umount "${cssPath}"`, (err) => {
+    exec(`pkexec cp "${tempPath}" "${htmlPath}"`, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+async function patchWithElevation(cssPath, htmlPath, context) {
+  const storagePath = context.globalStorageUri.fsPath;
+  fs.mkdirSync(storagePath, { recursive: true });
+
+  let cssContent = fs.readFileSync(cssPath, 'utf-8');
+  if (isCssPatched(cssContent)) cssContent = removeCssPatch(cssContent);
+  cssContent += generateDeepSpaceCSS();
+  const patchedCssPath = path.join(storagePath, 'workbench-patched.css');
+  fs.writeFileSync(patchedCssPath, cssContent, 'utf-8');
+
+  let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
+  if (isHtmlPatched(htmlContent)) htmlContent = removeHtmlPatch(htmlContent);
+  const insertPoint = htmlContent.lastIndexOf('</html>');
+  if (insertPoint !== -1) {
+    htmlContent = htmlContent.substring(0, insertPoint) + generateDeepSpaceHTML() + '\n' + htmlContent.substring(insertPoint);
+  } else {
+    htmlContent += '\n' + generateDeepSpaceHTML();
+  }
+  const patchedHtmlPath = path.join(storagePath, 'workbench-patched.html');
+  fs.writeFileSync(patchedHtmlPath, htmlContent, 'utf-8');
+
+  return new Promise((resolve, reject) => {
+    const cmd = `pkexec sh -c 'mount --bind "${patchedCssPath}" "${cssPath}" && mount --bind "${patchedHtmlPath}" "${htmlPath}"'`;
+    exec(cmd, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+async function unpatchWithElevation(cssPath, htmlPath) {
+  return new Promise((resolve, reject) => {
+    const cmd = `pkexec sh -c 'umount "${cssPath}" 2>/dev/null; umount "${htmlPath}" 2>/dev/null; true'`;
+    exec(cmd, (err) => {
       if (err) reject(err);
       else resolve(true);
     });
@@ -327,24 +321,32 @@ async function unpatchWithElevation(cssPath) {
 
 async function enableBackground(context) {
   const cssPath = getWorkbenchCssPath();
+  const htmlPath = getWorkbenchHtmlPath();
   if (!cssPath) {
     vscode.window.showErrorMessage('Deep Space: Could not locate VS Code workbench CSS file.');
     return;
   }
 
   try {
+    // Patch CSS
     if (isWritable(cssPath)) {
-      // Standard installation (apt, deb, manual) — patch directly
-      await patchDirect(cssPath);
+      patchCssFile(cssPath);
     } else {
-      // Snap or read-only installation — needs elevated permissions
       const choice = await vscode.window.showWarningMessage(
-        'VS Code files are read-only (Snap install detected). Deep Space needs admin permission to patch the CSS.',
-        'Authenticate & Enable',
-        'Cancel'
+        'VS Code CSS is read-only. Deep Space needs admin permission.',
+        'Authenticate & Enable', 'Cancel'
       );
       if (choice !== 'Authenticate & Enable') return;
-      await patchWithElevation(cssPath, context);
+      await patchWithElevation(cssPath, htmlPath, context);
+    }
+
+    // Patch HTML (star layer divs) — may need separate elevation
+    if (htmlPath) {
+      if (isWritable(htmlPath)) {
+        patchHtmlFile(htmlPath);
+      } else if (!isHtmlPatched(fs.readFileSync(htmlPath, 'utf-8'))) {
+        await patchHtmlElevated(htmlPath, context);
+      }
     }
 
     const action = await vscode.window.showInformationMessage(
@@ -366,6 +368,7 @@ async function enableBackground(context) {
 
 async function disableBackground(context) {
   const cssPath = getWorkbenchCssPath();
+  const htmlPath = getWorkbenchHtmlPath();
   if (!cssPath) {
     vscode.window.showErrorMessage('Deep Space: Could not locate VS Code workbench CSS file.');
     return;
@@ -373,16 +376,24 @@ async function disableBackground(context) {
 
   try {
     const cssContent = fs.readFileSync(cssPath, 'utf-8');
-    if (!isPatched(cssContent)) {
+    const htmlContent = htmlPath ? fs.readFileSync(htmlPath, 'utf-8') : '';
+    if (!isCssPatched(cssContent) && !isHtmlPatched(htmlContent)) {
       vscode.window.showInformationMessage('Deep Space background is not currently active.');
       return;
     }
 
     if (isWritable(cssPath)) {
-      const cleaned = removePatch(cssContent);
-      fs.writeFileSync(cssPath, cleaned, 'utf-8');
+      unpatchCssFile(cssPath);
     } else {
-      await unpatchWithElevation(cssPath);
+      await unpatchWithElevation(cssPath, htmlPath);
+    }
+
+    if (htmlPath) {
+      if (isWritable(htmlPath)) {
+        unpatchHtmlFile(htmlPath);
+      } else if (isHtmlPatched(fs.readFileSync(htmlPath, 'utf-8'))) {
+        await unpatchHtmlElevated(htmlPath, context);
+      }
     }
 
     const action = await vscode.window.showInformationMessage(
@@ -404,14 +415,13 @@ function activate(context) {
     vscode.commands.registerCommand('monokaiDeuteranopiaColorblind.disableBackground', () => disableBackground(context))
   );
 
-  // Auto-prompt if theme is active but stars aren't enabled
   const currentTheme = vscode.workspace.getConfiguration().get('workbench.colorTheme');
   if (currentTheme === 'Monokai Deuteranopia Colorblind') {
     const cssPath = getWorkbenchCssPath();
     if (cssPath) {
       try {
         const cssContent = fs.readFileSync(cssPath, 'utf-8');
-        if (!isPatched(cssContent)) {
+        if (!isCssPatched(cssContent)) {
           vscode.window.showInformationMessage(
             'Monokai Deuteranopia Colorblind: Enable the animated deep space background?',
             'Enable',
